@@ -173,7 +173,7 @@
 
           const renderFromPath = (path, query) => fetchQuery(query, ( path.match(pathRegex) || [] )[1] ).then( data => {
             if (data.sys.type === 'Entry') {
-              fetchQuery({ limit: 1,  [`sys.createdAt[lt]`]: data.sys.createdAt }).then(response => {
+              fetchQuery({ limit: 1,  [`sys.createdAt[lt]`]: data.sys.createdAt}).then(response => {
                 console.log('less than: ', response.items);
                 const previousEl = document.querySelector('.btn-previous');
                 const episode = response.items[0];
@@ -186,7 +186,7 @@
                 }
                 return response;
               });
-              fetchQuery({ limit: 1,  [`sys.createdAt[gt]`]: data.sys.createdAt }).then(response => {
+              fetchQuery({ [`sys.createdAt[gt]`]: data.sys.createdAt, order: 'sys.createdAt' }).then(response => {
                 console.log('greater than: ', response.items);
                 const nextEl = document.querySelector('.btn-next');
                 const episode = response.items[0];
