@@ -90,7 +90,10 @@
             text-align: right;
           }
 
-          .permalink { text-align: right; }
+          .permalink {
+            text-align: right;
+            margin: 0;
+          }
 
           .episode .permalink { display: none; }
 
@@ -163,9 +166,8 @@
 
               case 'Error':
               default:
-                history.pushState(null,null,'/');
                 console.warn('response error', data);
-                return renderFromCurrentPath();
+                return contentEl.innerHTML = `<h2>500</h2>`;
                 
             }
           };
@@ -174,6 +176,9 @@
 
           const renderFromPath = (path, query) => fetchQuery(query, ( path.match(pathRegex) || [] )[1] ).then( data => {
             if (data.sys.type === 'Entry') {
+
+              /* FETCH PREVIOUS EPISODE */
+
               fetchQuery({ limit: 1,  [`sys.createdAt[lt]`]: data.sys.createdAt}).then(response => {
                 // console.log('less than: ', response.items);
                 const previousEl = document.querySelector('.btn-previous');
@@ -187,6 +192,9 @@
                 }
                 return response;
               });
+
+              /* FETCH NEW EPISODE */
+
               fetchQuery({ limit: 1, [`sys.createdAt[gt]`]: data.sys.createdAt, order: 'sys.createdAt' }).then(response => {
                 // console.log('greater than: ', response.items);
                 const nextEl = document.querySelector('.btn-next');
@@ -206,11 +214,12 @@
 
           const renderFromCurrentPath = query => renderFromPath(window.location.pathname);
 
-          const pushNewPath = (path, state=null) => {
+          const changePath = (path, renderMethod, state=null) => {
             history.pushState(state, null, path);
-            return renderFromPath(path);
+            return renderMethod(path);
           }
 
+          const changePathAndRender = (path, state) => changePath(path, renderFromPath, state);
 
           document.querySelector('#app').addEventListener('click', e => {
             
@@ -220,9 +229,9 @@
               e.stopPropagation();
               switch (dataset.type) {
                 case 'path':
-                  return pushNewPath(dataset.path);
+                  return changePathAndRender(dataset.path);
                 case 'episode':
-                  return pushNewPath(`/episodes/${ dataset.episode }`);
+                  return changePathAndRender(`/episodes/${ dataset.episode }`);
                 default:
                   return;
               }
