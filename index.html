@@ -1,0 +1,231 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css">
+        <link href="https://fonts.googleapis.com/css?family=PT+Mono|Source+Code+Pro|Ubuntu+Mono" rel="stylesheet">
+
+        <style type="text/css">        
+
+          html {
+            box-sizing: border-box;
+          }
+          *, *:before, *:after {
+            box-sizing: inherit;
+          }
+
+          body {
+            background: lightgray;
+            font-family: 'PT Mono', monospace;
+          }
+
+          header { cursor: pointer; }
+
+          h3 {
+            text-align: center;
+            margin: 40px 0 0;
+            cursor: pointer;
+          }
+
+          section {
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+          }
+
+          .clearfix { clear:both; }
+
+          .displayNone { display: none; }
+
+          .entry {
+            background: #ffffff;
+            padding: 25px 40px;
+            margin: 40px 0;
+          }
+          
+          p {
+            font-size: 14px;
+            line-height: 1.5em;
+          }
+
+          a { font-size: 12px; }
+
+          .tags { font-size: 10px; }
+
+          .tag {
+            text-decoration: underline;
+            cursor: pointer;
+          }
+
+          .btn {
+            font-size: 14px;
+            display: inline-block;
+            cursor: pointer;
+            font-weight: 900;
+            width: 130px;
+            padding: 10px;
+            /*background: #ffffff;*/
+            /*text-align: center;*/
+            color: gray;
+          }
+
+          .btn:hover { color: #000000; }
+
+          .btn.hide{ display: none }
+
+          .btn.btn-previous { float: left; }
+
+          .btn.btn-next {
+            float: right;
+            text-align: right;
+          }
+
+          .permalink { text-align: right; }
+
+          .episode .permalink { display: none; }
+
+          .episode .entry { margin-bottom: 10px; }
+
+        </style>
+    </head>
+    <body>
+
+        <div id="app">
+          <h3 data-type="path" data-path="/">A Presidential Sitcom</h3>
+          <section id="content"></section>
+        </div>
+
+        <script type="text/javascript">
+
+          const apiurl = `https://cdn.contentful.com/spaces/vc1pqz55uikb/entries`;
+          
+          const defaultQuery = {
+            'content_type': 'episodes',
+            'limit': 100,
+            'order': '-sys.createdAt',
+            'access_token': '1676b21629539cf0be8b7d7df2a3cb0fd9343767ffd512ea74065aaca9755bc7'
+          }
+          
+          const queryParams = (params={}) => {
+            const allParams = Object.assign({}, defaultQuery, params);
+            return Object.keys(allParams)
+                .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(allParams[k]))
+                .join('&');
+          }
+
+          const fetchQuery = (params, id='') => fetch(`${ apiurl }/${ id }?${ queryParams(params) }`)
+            .then(response => response.json());
+
+          const contentEl = document.querySelector('#content');
+
+          /* Templates or whatever we're calling them these days */
+
+          const makeEntry = ({ fields, sys: { id } }) => `<div class="entry">
+            <p>${ fields.summary }</p>
+            <p class="permalink"><a href data-type="episode" data-episode="${ id }">permanent link</a></p>
+          </div>`;
+
+          const makeEpisodeList = data => data.items.reduce((htmlStr, item) => htmlStr + makeEntry(item), '');
+
+          const makeEpisode = data => `<div class="episode">
+            <article>
+              ${ makeEntry(data) }
+            </article>
+            <div data-type="episode" class="btn btn-previous hide">« Previous</div>
+            <div data-type="episode" class="btn btn-next hide">Next »</div>
+            <div class="clearfix"></div>
+          </div>`;
+
+          const updateEpisode = (data, el) => el.innerHTML = makeEntry(data);
+          
+          const render = data => {
+            switch (data.sys.type) {
+              case 'Entry':
+                const el = document.querySelector('.episode article');
+                if (el) {
+                  return el.innerHTML = updateEpisode(data, el);
+                }
+                return contentEl.innerHTML = makeEpisode(data);
+
+              case 'Array':
+                return contentEl.innerHTML = makeEpisodeList(data);
+
+              case 'Error':
+              default:
+                history.pushState(null,null,'/');
+                console.warn('response error', data);
+                return renderFromCurrentPath();
+                
+            }
+          };
+
+          const pathRegex = /^\/episodes\/(.+?(?=\/|$))/
+
+          const renderFromPath = (path, query) => fetchQuery(query, ( path.match(pathRegex) || [] )[1] ).then( data => {
+            if (data.sys.type === 'Entry') {
+              fetchQuery({ limit: 1,  [`sys.createdAt[lt]`]: data.sys.createdAt }).then(response => {
+                console.log('less than: ', response.items);
+                const previousEl = document.querySelector('.btn-previous');
+                const episode = response.items[0];
+                if (episode){
+                  previousEl.classList.remove('hide');
+                  previousEl.dataset.episode = episode.sys.id;
+                }
+                else {
+                  previousEl.classList.add('hide');
+                }
+                return response;
+              });
+              fetchQuery({ limit: 1,  [`sys.createdAt[gt]`]: data.sys.createdAt }).then(response => {
+                console.log('greater than: ', response.items);
+                const nextEl = document.querySelector('.btn-next');
+                const episode = response.items[0];
+                if (episode){
+                  nextEl.classList.remove('hide');
+                  nextEl.dataset.episode = episode.sys.id;
+                }
+                else {
+                  nextEl.classList.add('hide');
+                }
+                return response;
+              })
+            }
+            return render(data);
+          });
+
+          const renderFromCurrentPath = query => renderFromPath(window.location.pathname);
+
+          const pushNewPath = (path, state=null) => {
+            history.pushState(state, null, path);
+            return renderFromPath(path);
+          }
+
+
+          document.querySelector('#app').addEventListener('click', e => {
+            
+            const dataset = e.target.dataset;
+            if (dataset.type) {
+              e.preventDefault();
+              e.stopPropagation();
+              switch (dataset.type) {
+                case 'path':
+                  return pushNewPath(dataset.path);
+                case 'episode':
+                  return pushNewPath(`/episodes/${ dataset.episode }`);
+                default:
+                  return;
+              }
+            }
+          });
+          window.addEventListener('popstate', e => renderFromCurrentPath()); 
+
+          renderFromCurrentPath();
+
+        </script>
+    </body>
+</html>
