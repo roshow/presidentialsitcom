@@ -134,23 +134,25 @@
 
           /* Templates or whatever we're calling them these days */
 
-          const makeEntry = ({ fields, sys }) => `<div class="entry">
+          const entryComponent = ({ fields, sys }) => `<div class="entry">
             <p>${ fields.summary }</p>
             <p class="permalink"><a href data-type="episode" data-episode="${ sys.id }">${ new Date(sys.createdAt).toLocaleString() }</a></p>
           </div>`;
 
-          const makeEpisodeList = data => data.items.reduce((htmlStr, item) => htmlStr + makeEntry(item), '');
+          const episodeListComponent = data => `<div class="episodeList">
+            ${ data.items.reduce((htmlStr, item) => htmlStr + entryComponent(item), '') }
+          </div>`;
 
-          const makeEpisode = data => `<div class="episode">
+          const episodeComponent = data => `<div class="episode">
             <article>
-              ${ makeEntry(data) }
+              ${ entryComponent(data) }
             </article>
             <div data-type="episode" class="btn btn-previous hide">« Previous</div>
             <div data-type="episode" class="btn btn-next hide">Next »</div>
             <div class="clearfix"></div>
           </div>`;
 
-          const updateEpisode = (data, el) => el.innerHTML = makeEntry(data);
+          const updateEpisode = (data, el) => el.innerHTML = entryComponent(data);
           
           const render = data => {
             switch (data.sys.type) {
@@ -159,10 +161,10 @@
                 if (el) {
                   return el.innerHTML = updateEpisode(data, el);
                 }
-                return contentEl.innerHTML = makeEpisode(data);
+                return contentEl.innerHTML = episodeComponent(data);
 
               case 'Array':
-                return contentEl.innerHTML = makeEpisodeList(data);
+                return contentEl.innerHTML = episodeListComponent(data);
 
               case 'Error':
               default:
