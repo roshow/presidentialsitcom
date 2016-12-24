@@ -53,7 +53,12 @@
             line-height: 1.5em;
           }
 
-          a { font-size: 12px; }
+          a {
+            color: gray;
+            font-size: 11px;
+          }
+
+          a:hover { color: #000000; }
 
           .tags { font-size: 10px; }
 
@@ -125,9 +130,9 @@
 
           /* Templates or whatever we're calling them these days */
 
-          const makeEntry = ({ fields, sys: { id } }) => `<div class="entry">
+          const makeEntry = ({ fields, sys }) => `<div class="entry">
             <p>${ fields.summary }</p>
-            <p class="permalink"><a href data-type="episode" data-episode="${ id }">permanent link</a></p>
+            <p class="permalink"><a href data-type="episode" data-episode="${ sys.id }">${ new Date(sys.createdAt).toLocaleString() }</a></p>
           </div>`;
 
           const makeEpisodeList = data => data.items.reduce((htmlStr, item) => htmlStr + makeEntry(item), '');
