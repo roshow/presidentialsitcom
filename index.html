@@ -3,9 +3,22 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="x-ua-compatible" content="ie=edge">
-        <title></title>
-        <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>A Presidential Sitcom</title>
+        <meta name="description" content="A rich old white guy says so much crazy, angry shit that he becomes President. But now he's got to figure out how to run a whole country!">
+        
+        <!-- Twitter Card data -->
+        <meta name="twitter:card" value="summary">
+
+        <!-- Open Graph data -->
+        <meta property="og:title" content="A Presidential Sitcom" />
+        <meta property="og:type" content="article" />
+        <!-- <meta property="og:url" content="http://presidentialsit.com/" /> -->
+        <!-- <meta property="og:image" content="http://example.com/image.jpg" /> -->
+        <meta property="og:description" content="A rich old white guy says so much crazy, angry shit that he becomes President. But now he's got to figure out how to run a whole country!" />
+
+        <link rel="shortcut icon" href="/favicon.ico">
 
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css">
         <link href="https://fonts.googleapis.com/css?family=PT+Mono|Source+Code+Pro|Ubuntu+Mono" rel="stylesheet">
@@ -20,7 +33,7 @@
           }
 
           body {
-            background: lightgray;
+            background: #D3D3D3;
             font-family: 'PT Mono', monospace;
           }
 
@@ -54,7 +67,7 @@
           }
 
           a {
-            color: gray;
+            color: #696969;
             font-size: 11px;
           }
 
@@ -74,9 +87,7 @@
             font-weight: 900;
             width: 130px;
             padding: 10px;
-            /*background: #ffffff;*/
-            /*text-align: center;*/
-            color: gray;
+            color: #696969;
           }
 
           .btn:hover { color: #000000; }
@@ -99,14 +110,17 @@
 
           .episode .entry { margin-bottom: 10px; }
 
+          .showSummary {
+            /*text-align: center;*/
+            padding: 0 40px;
+            font-family: Helvetica;
+          }
+
         </style>
     </head>
     <body>
 
-        <div id="app">
-          <h3 data-type="path" data-path="/">A Presidential Sitcom</h3>
-          <section id="content"></section>
-        </div>
+        <section id="app"></section>
 
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.1/fetch.js"></script>
         <script type="text/javascript">
@@ -130,13 +144,21 @@
           const fetchQuery = (params, id='') => fetch(`${ apiurl }/${ id }?${ queryParams(params) }`)
             .then(response => response.json());
 
-          const contentEl = document.querySelector('#content');
-
           /* Templates or whatever we're calling them these days */
 
-          const entryComponent = ({ fields, sys }) => `<div class="entry">
-            <p>${ fields.summary }</p>
-            <p class="permalink"><a href data-type="episode" data-episode="${ sys.id }">${ new Date(sys.createdAt).toLocaleString() }</a></p>
+          const headerComponent = (data={}) => `<h3 data-type="path" data-path="/">A Presidential Sitcom</h3>
+            ${ 
+                data.showSummary ? `<section class="showSummary" >
+                  <p>A crazy, rich, old white guy says so much angry stuff that he becomes President. But now he's got to figure out how to run a whole country!</p>
+                </section>` : ''
+              }
+          </div>`;
+
+          const renderWithHeader = (component='', data) => headerComponent(data) + component;
+
+          const entryComponent = data => `<div class="entry">
+            <p>${ data.fields.summary }</p>
+            <p class="permalink"><a href data-type="episode" data-episode="${ data.sys.id }">${ new Date(data.sys.createdAt).toLocaleString() }</a></p>
           </div>`;
 
           const episodeListComponent = data => `<div class="episodeList">
@@ -152,65 +174,59 @@
             <div class="clearfix"></div>
           </div>`;
 
-          const updateEpisode = (data, el) => el.innerHTML = entryComponent(data);
+          const updateEpisodeComponent = (data, el) => el.innerHTML = entryComponent(data);
+
+          const setEpisodeArrows = (selector, episode) => {
+            const el = document.querySelector(selector);
+            if (episode){
+              el.classList.remove('hide');
+              el.dataset.episode = episode.sys.id;
+            }
+            else {
+              el.classList.add('hide');
+            }
+          }
+
+
+          const appEl = document.querySelector('#app');
           
           const render = data => {
+
             switch (data.sys.type) {
+              
               case 'Entry':
+                
                 const el = document.querySelector('.episode article');
                 if (el) {
-                  return el.innerHTML = updateEpisode(data, el);
+                  el.innerHTML = updateEpisodeComponent(data, el);
                 }
-                return contentEl.innerHTML = episodeComponent(data);
+                else {
+                  appEl.innerHTML = renderWithHeader(episodeComponent(data));  
+                }
+                
+                /* FETCH PREVIOUS EPISODE */
+                fetchQuery({ limit: 1,  [`sys.createdAt[lt]`]: data.sys.createdAt}).then(response => setEpisodeArrows('.btn-previous', response.items[0]));
+                
+                /* FETCH NEW EPISODE */
+                fetchQuery({ limit: 1, [`sys.createdAt[gt]`]: data.sys.createdAt, order: 'sys.createdAt' }).then(response => setEpisodeArrows('.btn-next', response.items[0]));
+
+                return;
 
               case 'Array':
-                return contentEl.innerHTML = episodeListComponent(data);
+                
+                return appEl.innerHTML = renderWithHeader(episodeListComponent(data));
 
               case 'Error':
               default:
-                console.warn('response error', data);
-                return contentEl.innerHTML = `<h2>500</h2>`;
                 
+                console.warn('response error', data);
+                return appEl.innerHTML = headerComponent() + `<h2>500 Error</h2>`;
             }
           };
 
           const pathRegex = /^\/episodes\/(.+?(?=\/|$))/
 
           const renderFromPath = (path, query) => fetchQuery(query, ( path.match(pathRegex) || [] )[1] ).then( data => {
-            if (data.sys.type === 'Entry') {
-
-              /* FETCH PREVIOUS EPISODE */
-
-              fetchQuery({ limit: 1,  [`sys.createdAt[lt]`]: data.sys.createdAt}).then(response => {
-                // console.log('less than: ', response.items);
-                const previousEl = document.querySelector('.btn-previous');
-                const episode = response.items[0];
-                if (episode){
-                  previousEl.classList.remove('hide');
-                  previousEl.dataset.episode = episode.sys.id;
-                }
-                else {
-                  previousEl.classList.add('hide');
-                }
-                return response;
-              });
-
-              /* FETCH NEW EPISODE */
-
-              fetchQuery({ limit: 1, [`sys.createdAt[gt]`]: data.sys.createdAt, order: 'sys.createdAt' }).then(response => {
-                // console.log('greater than: ', response.items);
-                const nextEl = document.querySelector('.btn-next');
-                const episode = response.items[0];
-                if (episode){
-                  nextEl.classList.remove('hide');
-                  nextEl.dataset.episode = episode.sys.id;
-                }
-                else {
-                  nextEl.classList.add('hide');
-                }
-                return response;
-              })
-            }
             return render(data);
           });
 
@@ -223,7 +239,7 @@
 
           const changePathAndRender = (path, state) => changePath(path, renderFromPath, state);
 
-          document.querySelector('#app').addEventListener('click', e => {
+          appEl.addEventListener('click', e => {
             
             const dataset = e.target.dataset;
             if (dataset.type) {
