@@ -148,6 +148,7 @@
             </div>
           </header>`;
 
+          let i = 23;
           const entryComponent = data => `<div class="entry">
             <p>${ data.fields.summary }</p>
             <p class="permalink"><a href data-type="episode" data-episode="${ data.sys.id }">${ new Date(data.sys.createdAt).toLocaleString() }</a></p>
@@ -224,12 +225,10 @@
 
           const renderFromCurrentPath = query => renderFromPath(window.location.pathname);
 
-          const changePath = (path, renderMethod, state=null) => {
+          const changePathAndRender = (path, state=null) => {
             history.pushState(state, null, path);
-            return renderMethod(path);
+            return renderFromCurrentPath();
           }
-
-          const changePathAndRender = (path, state) => changePath(path, renderFromPath, state);
 
           appEl.addEventListener('click', e => {
             
