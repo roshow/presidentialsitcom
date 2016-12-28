@@ -37,15 +37,30 @@
             font-family: 'PT Mono', monospace;
           }
 
-          header { cursor: pointer; }
-
-          h3 {
-            text-align: center;
-            margin: 40px 0 0;
-            cursor: pointer;
+          h1, h2, h3, h4, h5 {
+            margin: 0;
           }
 
-          section {
+          header {
+            text-align: center;
+            margin: 40px 0 0;
+          }
+
+          .titleBox .title {
+            cursor: pointer;
+            margin-bottom: 8px;
+          }
+
+          header .credits, header a {
+            color: gray;
+          }
+
+          .titleBox {
+            display: inline-block;
+            text-align: left;
+          }
+
+          #app {
             width: 100%;
             max-width: 600px;
             margin: auto;
@@ -67,18 +82,13 @@
           }
 
           a {
+            text-decoration: none;
+            cursor: pointer;
             color: #696969;
-            font-size: 11px;
           }
 
           a:hover { color: #000000; }
 
-          .tags { font-size: 10px; }
-
-          .tag {
-            text-decoration: underline;
-            cursor: pointer;
-          }
 
           .btn {
             font-size: 14px;
@@ -104,23 +114,21 @@
           .permalink {
             text-align: right;
             margin: 0;
+            font-size: 11px;
+            text-decoration: underline;
           }
 
           .episode .permalink { display: none; }
 
           .episode .entry { margin-bottom: 10px; }
 
-          .showSummary {
-            /*text-align: center;*/
-            padding: 0 40px;
-            font-family: Helvetica;
-          }
-
         </style>
     </head>
     <body>
 
-        <section id="app"></section>
+          
+
+        <div id="app"></div>
 
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.1/fetch.js"></script>
         <script type="text/javascript">
@@ -144,17 +152,12 @@
           const fetchQuery = (params, id='') => fetch(`${ apiurl }/${ id }?${ queryParams(params) }`)
             .then(response => response.json());
 
-          /* Templates or whatever we're calling them these days */
-
-          const headerComponent = (data={}) => `<h3 data-type="path" data-path="/">A Presidential Sitcom</h3>
-            ${ 
-                data.showSummary ? `<section class="showSummary" >
-                  <p>A crazy, rich, old white guy says so much angry stuff that he becomes President. But now he's got to figure out how to run a whole country!</p>
-                </section>` : ''
-              }
-          </div>`;
-
-          const renderWithHeader = (component='', data) => headerComponent(data) + component;
+          const headerComponent = data => `<header>
+            <div class="titleBox">
+              <h3 class="title" data-type="path" data-path="/">A Presidential Sitcom</h3>
+              <h5 class="credits">by <a href="https://twitter.com/roshow" target="_blank">roshow</a></h5>
+            </div>
+          </header>`;
 
           const entryComponent = data => `<div class="entry">
             <p>${ data.fields.summary }</p>
@@ -201,7 +204,7 @@
                   el.innerHTML = updateEpisodeComponent(data, el);
                 }
                 else {
-                  appEl.innerHTML = renderWithHeader(episodeComponent(data));  
+                  appEl.innerHTML = headerComponent() + episodeComponent(data);  
                 }
                 
                 /* FETCH PREVIOUS EPISODE */
@@ -214,7 +217,7 @@
 
               case 'Array':
                 
-                return appEl.innerHTML = renderWithHeader(episodeListComponent(data));
+                return appEl.innerHTML = headerComponent() + episodeListComponent(data);
 
               case 'Error':
               default:
