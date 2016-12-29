@@ -51,7 +51,8 @@
 
           #app {
             width: 100%;
-            max-width: 600px;
+            max-width: 640px;
+            padding: 0 20px;
             margin: auto;
           }
 
@@ -127,7 +128,7 @@
           const defaultQuery = {
             'content_type': 'episodes',
             'limit': 100,
-            'order': '-sys.createdAt',
+            'order': '-fields.number',
             'access_token': '1676b21629539cf0be8b7d7df2a3cb0fd9343767ffd512ea74065aaca9755bc7'
           }
           
@@ -144,7 +145,11 @@
           const headerComponent = data => `<header>
             <div class="titleBox">
               <h3 class="title" data-type="path" data-path="/">A Presidential Sitcom</h3>
-              <h5 class="credits">by <a href="https://twitter.com/roshow" target="_blank">roshow</a></h5>
+            </div>
+            <div>
+              <h5 class="credits" style="float:left;" >by <a href="https://twitter.com/roshow" target="_blank">roshow</a></h5>
+              <h5 class="credits" style="float:right;" ><a href="https://twitter.com/roshow" target="_blank">about this "project"</a></h5>
+              <div class="clearfix"></div>
             </div>
           </header>`;
 
