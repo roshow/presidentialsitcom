@@ -131,23 +131,6 @@
           
           const mdConverter = new showdown.Converter();
 
-          const defaultQuery = {
-            'content_type': 'episodes',
-            'limit': 100,
-            'order': '-fields.number',
-            'access_token': '1676b21629539cf0be8b7d7df2a3cb0fd9343767ffd512ea74065aaca9755bc7'
-          }
-          
-          const queryParams = (params={}) => {
-            const allParams = Object.assign({}, defaultQuery, params);
-            return Object.keys(allParams)
-                .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(allParams[k]))
-                .join('&');
-          }
-
-          const fetchQuery = (params, id='') => fetch(`${ API_URL }/${ id }?${ queryParams(params) }`)
-            .then(response => response.json());
-
           const headerComponent = data => `<header>
             <div class="titleBox">
               <h3 class="title" data-type="path" data-path="/">A Presidential Sitcom</h3>
@@ -202,6 +185,23 @@
             }
           }
 
+          const defaultQuery = {
+            'content_type': 'episodes',
+            'limit': 100,
+            'order': '-fields.number',
+            'access_token': '1676b21629539cf0be8b7d7df2a3cb0fd9343767ffd512ea74065aaca9755bc7'
+          }
+          
+          const queryParams = (params={}) => {
+            const allParams = Object.assign({}, defaultQuery, params);
+            return Object.keys(allParams)
+                .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(allParams[k]))
+                .join('&');
+          }
+
+          const fetchQuery = (params, id='') => fetch(`${ API_URL }/${ id }?${ queryParams(params) }`)
+            .then(response => response.json());
+
 
           const renderEpisode = data => {
             const el = document.querySelector('.episode article');
@@ -226,7 +226,6 @@
           }
           
           const render = data => {
-
 
             switch (data.sys.type) {
               
@@ -258,17 +257,48 @@
             }
           };
 
-          const pathRegex = /^\/episodes\/(.+?(?=\/|$))/
+          const fetchAndRender = (...args) => fetchQuery(...args).then(render); 
 
-          const renderFromPath = (path, query) => fetchQuery(query, ( path.match(pathRegex) || [] )[1] ).then( data => {
-            return render(data);
-          });
+          const REGEX_EPISODE = /^\/episodes\/(.+?(?=\/|$))/
 
-          const renderFromCurrentPath = query => renderFromPath(window.location.pathname);
+          const router = (path, query={}) => {
+            
+            if (path === '/') {
+              
+              fetchAndRender();
+            
+            }
+
+            else if (path === '/about') {
+
+              fetchQuery({
+                content_type: 'details',
+                'fields.onAboutPage': true,
+                order: 'fields.aboutPagePosition'
+              }).then(console.log);
+
+            }
+            
+            else if (REGEX_EPISODE.test(path)) {
+              
+              fetchAndRender(query, path.match(REGEX_EPISODE)[1]);
+            
+            }
+            
+            else {
+
+              history.replaceState(null, null, '/');
+              fetchAndRender(); 
+
+            }
+
+            return;
+          }
+
 
           const changePathAndRender = (path, state=null) => {
             history.pushState(state, null, path);
-            return renderFromCurrentPath();
+            return router(window.location.pathname);
           }
 
           APP_EL.addEventListener('click', e => {
@@ -289,7 +319,7 @@
           });
           window.addEventListener('popstate', e => renderFromCurrentPath()); 
 
-          renderFromCurrentPath();
+          router(window.location.pathname);
 
         </script>
     </body>
