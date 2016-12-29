@@ -74,6 +74,10 @@
             margin: 40px 0;
             font-size: 14px;
           }
+
+          p, .entry-title {
+            margin: 14px 0;
+          }
           
           p, ul li {
             line-height: 1.5em;
@@ -154,7 +158,7 @@
             const path = window.location.pathname;
             return `<header>
               <div class="titleBox">
-                <h3 class="title" data-type="path" data-path="/">A Presidential Sitcom.</h3>
+                <h3 class="title" data-type="path" data-path="/">A Presidential Sitcom</h3>
               </div>
               <nav>
                 <a data-type="path" data-path="/" class="${ path === '/' ? 'active' : '' }" >episodes</a>
