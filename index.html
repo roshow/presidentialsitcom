@@ -295,7 +295,7 @@
             else {
 
               history.replaceState(null, null, '/');
-              fetchAndRender(); 
+              router('/', query); 
 
             }
 
