@@ -177,7 +177,7 @@
             const createdAtDateStr = new Date(createdAt).toLocaleDateString();
 
             return `<div class="entry">
-              <h4 class="entry-title">${ title }</h4>
+              <p class="entry-title"><span class="guest-writer">${ title }</span</p>
               ${ guestAuthor ? `<p><span class="guest-writer">Guest Writer: ${ guestAuthor }</span></p>` : `` }
               ${ summaryHtml }
               <p class="permalink"><a href data-type="episode" data-episode="${ id }">
