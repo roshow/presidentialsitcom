@@ -2,13 +2,11 @@
 
 sh ./build-php.sh
 
-HOST='ftp.roshow.net'
-FILE='index.php'
-
-ftp -n $HOST<< EOF
+ftp -n ftp.roshow.net << EOF
 quote USER $FTP_USER
 quote PASS $FTP_PASS
 cd presidentialsitcom
-put $FILE 
+put index.php
+put metatags.php
 quit
 EOF
