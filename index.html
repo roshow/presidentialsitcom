@@ -74,6 +74,10 @@
             margin: 40px 0;
             font-size: 14px;
           }
+
+          p, .entry-title {
+            margin: 14px 0;
+          }
           
           p, ul li {
             line-height: 1.5em;
@@ -168,7 +172,7 @@
 
             const { title='', summary, guestAuthor, number } = data.fields;
             const summaryHtml = mdConverter.makeHtml(summary);
-            
+
             const { id, createdAt } = data.sys;
             const createdAtDateStr = new Date(createdAt).toLocaleDateString();
 
