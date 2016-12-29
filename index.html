@@ -44,6 +44,15 @@
             color: gray;
           }
 
+          nav {
+            font-size: 0.83em;
+            color: gray;
+          }
+
+          nav .active {
+            color: #000000;
+          }
+
           .titleBox {
             display: inline-block;
             text-align: left;
@@ -51,8 +60,7 @@
 
           #app {
             width: 100%;
-            max-width: 640px;
-            padding: 0 20px;
+            max-width: 600px;
             margin: auto;
           }
 
@@ -64,10 +72,10 @@
             background: #ffffff;
             padding: 25px 40px;
             margin: 40px 0;
+            font-size: 14px;
           }
           
-          p {
-            font-size: 14px;
+          p, ul li {
             line-height: 1.5em;
           }
 
@@ -80,8 +88,7 @@
           a:hover { color: #000000; }
 
 
-          .btn {
-            font-size: 14px;
+          .btn {            
             display: inline-block;
             cursor: pointer;
             font-weight: 900;
@@ -108,9 +115,20 @@
             text-decoration: underline;
           }
 
-          .episode .permalink, .episode .entry-title, .episodeList .entry-title { display: none; }
+          .episode .permalink,
+          .detailsList .permalink,
+          .episode .entry-title,
+          .episodeList .entry-title { display: none; }
 
           .episode .entry { margin-bottom: 10px; }
+
+          .guest-writer {
+            font-weight: bold;
+          }
+
+          .detailsList a { text-decoration: underline; }
+
+
           
 
         </style>
@@ -131,35 +149,41 @@
           
           const mdConverter = new showdown.Converter();
 
-          const headerComponent = data => `<header>
-            <div class="titleBox">
-              <h3 class="title" data-type="path" data-path="/">A Presidential Sitcom</h3>
-            </div>
-            <div>
-              <h5 class="credits" style="float:left;" >by <a href="https://twitter.com/roshow" target="_blank">roshow</a></h5>
-              <h5 class="credits" style="float:right;" ><a href="https://twitter.com/roshow" target="_blank">about this "project"</a></h5>
-              <div class="clearfix"></div>
-            </div>
-          </header>`;
+          const headerComponent = data => {
+            const path = window.location.pathname;
+            return `<header>
+              <div class="titleBox">
+                <h3 class="title" data-type="path" data-path="/">A Presidential Sitcom</h3>
+              </div>
+              <nav>
+                <a data-type="path" data-path="/" class="${ path === '/' ? 'active' : '' }" >episodes</a>
+                |
+                <a data-type="path" data-path="/about" class="${ path === '/about' ? 'active' : '' }">about</a>
+              </nav>
+            </header>`;
+          }
 
           const entryComponent = (data, options={}) => {
 
-            const { title='', summary } = data.fields;
+            const { title='', summary, guestAuthor } = data.fields;
             const summaryHtml = mdConverter.makeHtml(summary);
             const { id, createdAt } = data.sys;
             const createdAtDateStr = new Date(createdAt).toLocaleString();
 
             return `<div class="entry">
               <h4 class="entry-title">${ title }</h4>
+              ${ guestAuthor ? `<span class="guest-writer">Guest Writer: ${ guestAuthor }</span>` : `` }
               <p>${ summaryHtml }</p>
               <p class="permalink"><a href data-type="episode" data-episode="${ id }">${ createdAtDateStr }</a></p>
             </div>`;
 
           }
 
-          const episodeListComponent = data => `<div class="episodeList">
+          const listComponent = (data, listType='') => `<div class="${ listType }">
             ${ data.items.reduce((htmlStr, item) => htmlStr + entryComponent(item), '') }
-          </div>`;
+          </div>`
+
+          const episodeListComponent = data => listComponent(data, 'episodeList');
 
           const episodeComponent = data => `<div class="episode">
             <article>
@@ -170,7 +194,7 @@
             <div class="clearfix"></div>
           </div>`;
 
-          // const detailComponent = 
+          const detailsListComponent = data => listComponent(data, 'detailsList');
 
           const updateEpisodeComponent = (data, el) => el.innerHTML = entryComponent(data);
 
@@ -202,6 +226,12 @@
           const fetchQuery = (params, id='') => fetch(`${ API_URL }/${ id }?${ queryParams(params) }`)
             .then(response => response.json());
 
+          const renderEpisodeList = data => APP_EL.innerHTML = headerComponent() + episodeListComponent(data);
+
+          const renderDetailsList = data => {
+            APP_EL.innerHTML = headerComponent() + detailsListComponent(data);
+            APP_EL.querySelectorAll('a[href]').forEach(el => el.target = '_blank');
+          }
 
           const renderEpisode = data => {
             const el = document.querySelector('.episode article');
@@ -225,39 +255,8 @@
             }).then(response => setEpisodeArrows('.btn-next', response.items[0]));
           }
           
-          const render = data => {
 
-            switch (data.sys.type) {
-              
-              case 'Entry':
-
-                const contentType = data.sys.contentType.sys.id;
-
-                switch (contentType) {
-
-                  case 'episodes':
-                    return renderEpisode(data);
-
-                  default:
-                    return;
-                }
-
-              case 'Array':
-
-                return APP_EL.innerHTML = headerComponent() + episodeListComponent(data);
-
-              case 'Error':
-                
-                console.warn('response error', data);
-                return APP_EL.innerHTML = headerComponent() + `<h2>500 Error</h2>`;
-
-              default:
-
-                return;
-            }
-          };
-
-          const fetchAndRender = (...args) => fetchQuery(...args).then(render); 
+          const fetchAndRender = (query, path) => fetchQuery(query, path).then(render); 
 
           const REGEX_EPISODE = /^\/episodes\/(.+?(?=\/|$))/
 
@@ -265,7 +264,7 @@
             
             if (path === '/') {
               
-              fetchAndRender();
+              fetchQuery().then(renderEpisodeList);
             
             }
 
@@ -275,13 +274,13 @@
                 content_type: 'details',
                 'fields.onAboutPage': true,
                 order: 'fields.aboutPagePosition'
-              }).then(console.log);
+              }).then(renderDetailsList);
 
             }
             
             else if (REGEX_EPISODE.test(path)) {
               
-              fetchAndRender(query, path.match(REGEX_EPISODE)[1]);
+              fetchQuery(query, path.match(REGEX_EPISODE)[1]).then(renderEpisode);
             
             }
             
