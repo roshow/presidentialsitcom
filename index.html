@@ -166,7 +166,7 @@
 
           const entryComponent = (data, options={}) => {
 
-            const { title='', summary, guestAuthor } = data.fields;
+            const { title='', summary, guestAuthor, number } = data.fields;
             const summaryHtml = mdConverter.makeHtml(summary);
             const { id, createdAt } = data.sys;
             const createdAtDateStr = new Date(createdAt).toLocaleDateString();
@@ -175,7 +175,9 @@
               <h4 class="entry-title">${ title }</h4>
               ${ guestAuthor ? `<span class="guest-writer">Guest Writer: ${ guestAuthor }</span>` : `` }
               <p>${ summaryHtml }</p>
-              <p class="permalink"><a href data-type="episode" data-episode="${ id }">${ createdAtDateStr }</a></p>
+              <p class="permalink"><a href data-type="episode" data-episode="${ id }">
+                ${ number >= 0 ? `episode #${ number}` : createdAtDateStr }
+              </a></p>
             </div>`;
 
           }
