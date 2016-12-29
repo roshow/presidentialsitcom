@@ -169,7 +169,7 @@
             const { title='', summary, guestAuthor } = data.fields;
             const summaryHtml = mdConverter.makeHtml(summary);
             const { id, createdAt } = data.sys;
-            const createdAtDateStr = new Date(createdAt).toLocaleString();
+            const createdAtDateStr = new Date(createdAt).toLocaleDateString();
 
             return `<div class="entry">
               <h4 class="entry-title">${ title }</h4>
