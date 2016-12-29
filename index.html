@@ -168,13 +168,14 @@
 
             const { title='', summary, guestAuthor, number } = data.fields;
             const summaryHtml = mdConverter.makeHtml(summary);
+            
             const { id, createdAt } = data.sys;
             const createdAtDateStr = new Date(createdAt).toLocaleDateString();
 
             return `<div class="entry">
               <h4 class="entry-title">${ title }</h4>
-              ${ guestAuthor ? `<span class="guest-writer">Guest Writer: ${ guestAuthor }</span>` : `` }
-              <p>${ summaryHtml }</p>
+              ${ guestAuthor ? `<p><span class="guest-writer">Guest Writer: ${ guestAuthor }</span></p>` : `` }
+              ${ summaryHtml }
               <p class="permalink"><a href data-type="episode" data-episode="${ id }">
                 ${ number >= 0 ? `episode #${ number}` : createdAtDateStr }
               </a></p>

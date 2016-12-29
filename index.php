@@ -5,7 +5,7 @@
         <meta http-equiv="x-ua-compatible" content="ie=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <?php include metatags.php ?>
+        <?php include "metatags.php" ?>
         
         <link rel="shortcut icon" href="/favicon.ico">
 
@@ -154,7 +154,7 @@
             const path = window.location.pathname;
             return `<header>
               <div class="titleBox">
-                <h3 class="title" data-type="path" data-path="/">A Presidential Sitcom</h3>
+                <h3 class="title" data-type="path" data-path="/">A Presidential Sitcom.</h3>
               </div>
               <nav>
                 <a data-type="path" data-path="/" class="${ path === '/' ? 'active' : '' }" >episodes</a>
@@ -166,16 +166,19 @@
 
           const entryComponent = (data, options={}) => {
 
-            const { title='', summary, guestAuthor } = data.fields;
+            const { title='', summary, guestAuthor, number } = data.fields;
             const summaryHtml = mdConverter.makeHtml(summary);
+
             const { id, createdAt } = data.sys;
-            const createdAtDateStr = new Date(createdAt).toLocaleString();
+            const createdAtDateStr = new Date(createdAt).toLocaleDateString();
 
             return `<div class="entry">
               <h4 class="entry-title">${ title }</h4>
-              ${ guestAuthor ? `<span class="guest-writer">Guest Writer: ${ guestAuthor }</span>` : `` }
-              <p>${ summaryHtml }</p>
-              <p class="permalink"><a href data-type="episode" data-episode="${ id }">${ createdAtDateStr }</a></p>
+              ${ guestAuthor ? `<p><span class="guest-writer">Guest Writer: ${ guestAuthor }</span></p>` : `` }
+              ${ summaryHtml }
+              <p class="permalink"><a href data-type="episode" data-episode="${ id }">
+                ${ number >= 0 ? `episode #${ number}` : createdAtDateStr }
+              </a></p>
             </div>`;
 
           }
