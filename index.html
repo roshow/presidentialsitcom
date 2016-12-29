@@ -125,10 +125,12 @@
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.5.4/showdown.min.js"></script>
         <script type="text/javascript">
 
-          var mdConverter = new showdown.Converter();
+          const APP_EL = document.querySelector('#app');
 
-          const apiurl = `https://cdn.contentful.com/spaces/vc1pqz55uikb/entries`;
+          const API_URL = `https://cdn.contentful.com/spaces/vc1pqz55uikb/entries`;
           
+          const mdConverter = new showdown.Converter();
+
           const defaultQuery = {
             'content_type': 'episodes',
             'limit': 100,
@@ -143,7 +145,7 @@
                 .join('&');
           }
 
-          const fetchQuery = (params, id='') => fetch(`${ apiurl }/${ id }?${ queryParams(params) }`)
+          const fetchQuery = (params, id='') => fetch(`${ API_URL }/${ id }?${ queryParams(params) }`)
             .then(response => response.json());
 
           const headerComponent = data => `<header>
@@ -201,7 +203,27 @@
           }
 
 
-          const appEl = document.querySelector('#app');
+          const renderEpisode = data => {
+            const el = document.querySelector('.episode article');
+            if (el) {
+              el.innerHTML = updateEpisodeComponent(data, el);
+            }
+            else {
+              APP_EL.innerHTML = headerComponent() + episodeComponent(data);  
+            }
+            
+            /* FETCH PREVIOUS EPISODE */
+            fetchQuery({
+              limit: 1,
+              'fields.number': data.fields.number - 1
+            }).then(response => setEpisodeArrows('.btn-previous', response.items[0]));
+            
+            /* FETCH NEW EPISODE */
+            fetchQuery({
+              limit: 1,
+              'fields.number': data.fields.number + 1
+            }).then(response => setEpisodeArrows('.btn-next', response.items[0]));
+          }
           
           const render = data => {
 
@@ -212,37 +234,27 @@
 
                 const contentType = data.sys.contentType.sys.id;
 
-                const el = document.querySelector('.episode article');
-                if (el) {
-                  el.innerHTML = updateEpisodeComponent(data, el);
-                }
-                else {
-                  appEl.innerHTML = headerComponent() + episodeComponent(data);  
-                }
-                
-                /* FETCH PREVIOUS EPISODE */
-                fetchQuery({
-                  limit: 1,
-                  'fields.number': data.fields.number - 1
-                }).then(response => setEpisodeArrows('.btn-previous', response.items[0]));
-                
-                /* FETCH NEW EPISODE */
-                fetchQuery({
-                  limit: 1,
-                  'fields.number': data.fields.number + 1
-                }).then(response => setEpisodeArrows('.btn-next', response.items[0]));
+                switch (contentType) {
 
-                return;
+                  case 'episodes':
+                    return renderEpisode(data);
+
+                  default:
+                    return;
+                }
 
               case 'Array':
-                
-                return appEl.innerHTML = headerComponent() + episodeListComponent(data);
+
+                return APP_EL.innerHTML = headerComponent() + episodeListComponent(data);
 
               case 'Error':
-              default:
                 
                 console.warn('response error', data);
-                return appEl.innerHTML = headerComponent() + `<h2>500 Error</h2>`;
+                return APP_EL.innerHTML = headerComponent() + `<h2>500 Error</h2>`;
+
+              default:
+
+                return;
             }
           };
 
@@ -259,7 +271,7 @@
             return renderFromCurrentPath();
           }
 
-          appEl.addEventListener('click', e => {
+          APP_EL.addEventListener('click', e => {
             
             const dataset = e.target.dataset;
             if (dataset.type) {
