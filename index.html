@@ -88,7 +88,8 @@
           a:hover { color: #000000; }
 
 
-          .btn {            
+          .btn {
+            font-size: 14px;            
             display: inline-block;
             cursor: pointer;
             font-weight: 900;
