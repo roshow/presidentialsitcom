@@ -108,9 +108,10 @@
             text-decoration: underline;
           }
 
-          .episode .permalink { display: none; }
+          .episode .permalink, .episode .entry-title, .episodeList .entry-title { display: none; }
 
           .episode .entry { margin-bottom: 10px; }
+          
 
         </style>
     </head>
@@ -153,11 +154,19 @@
             </div>
           </header>`;
 
-          let i = 23;
-          const entryComponent = data => `<div class="entry">
-            <p>${ data.fields.summary }</p>
-            <p class="permalink"><a href data-type="episode" data-episode="${ data.sys.id }">${ new Date(data.sys.createdAt).toLocaleString() }</a></p>
-          </div>`;
+          const entryComponent = (data, options={}) => {
+
+            const { title='', summary } = data.fields;
+            const { id, createdAt } = data.sys;
+            const createdAtDateStr = new Date(createdAt).toLocaleString();
+
+            return `<div class="entry">
+              <h4 class="entry-title">${ title }</h4>
+              <p>${ summary }</p>
+              <p class="permalink"><a href data-type="episode" data-episode="${ id }">${ createdAtDateStr }</a></p>
+            </div>`;
+
+          }
 
           const episodeListComponent = data => `<div class="episodeList">
             ${ data.items.reduce((htmlStr, item) => htmlStr + entryComponent(item), '') }
@@ -171,6 +180,8 @@
             <div data-type="episode" class="btn btn-next hide">Next »</div>
             <div class="clearfix"></div>
           </div>`;
+
+          // const detailComponent = 
 
           const updateEpisodeComponent = (data, el) => el.innerHTML = entryComponent(data);
 
