@@ -44,6 +44,15 @@
             color: gray;
           }
 
+          nav {
+            font-size: 0.83em;
+            color: gray;
+          }
+
+          nav .active {
+            color: #000000;
+          }
+
           .titleBox {
             display: inline-block;
             text-align: left;
@@ -63,10 +72,14 @@
             background: #ffffff;
             padding: 25px 40px;
             margin: 40px 0;
+            font-size: 14px;
+          }
+
+          p, .entry-title {
+            margin: 14px 0;
           }
           
-          p {
-            font-size: 14px;
+          p, ul li {
             line-height: 1.5em;
           }
 
@@ -80,7 +93,7 @@
 
 
           .btn {
-            font-size: 14px;
+            font-size: 14px;            
             display: inline-block;
             cursor: pointer;
             font-weight: 900;
@@ -107,9 +120,21 @@
             text-decoration: underline;
           }
 
-          .episode .permalink { display: none; }
+          .episode .permalink,
+          .detailsList .permalink,
+          .episode .entry-title,
+          .episodeList .entry-title { display: none; }
 
           .episode .entry { margin-bottom: 10px; }
+
+          .guest-writer {
+            font-weight: bold;
+          }
+
+          .detailsList a { text-decoration: underline; }
+
+
+          
 
         </style>
     </head>
@@ -120,42 +145,53 @@
         <div id="app"></div>
 
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.1/fetch.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.5.4/showdown.min.js"></script>
         <script type="text/javascript">
 
-          const apiurl = `https://cdn.contentful.com/spaces/vc1pqz55uikb/entries`;
+          const APP_EL = document.querySelector('#app');
+
+          const API_URL = `https://cdn.contentful.com/spaces/vc1pqz55uikb/entries`;
           
-          const defaultQuery = {
-            'content_type': 'episodes',
-            'limit': 100,
-            'order': '-sys.createdAt',
-            'access_token': '1676b21629539cf0be8b7d7df2a3cb0fd9343767ffd512ea74065aaca9755bc7'
+          const mdConverter = new showdown.Converter();
+
+          const headerComponent = data => {
+            const path = window.location.pathname;
+            return `<header>
+              <div class="titleBox">
+                <h3 class="title" data-type="path" data-path="/">A Presidential Sitcom</h3>
+              </div>
+              <nav>
+                <a data-type="path" data-path="/" class="${ path === '/' ? 'active' : '' }" >episodes</a>
+                |
+                <a data-type="path" data-path="/about" class="${ path === '/about' ? 'active' : '' }">about</a>
+              </nav>
+            </header>`;
           }
-          
-          const queryParams = (params={}) => {
-            const allParams = Object.assign({}, defaultQuery, params);
-            return Object.keys(allParams)
-                .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(allParams[k]))
-                .join('&');
+
+          const entryComponent = (data, options={}) => {
+
+            const { title='', summary, guestAuthor, number } = data.fields;
+            const summaryHtml = mdConverter.makeHtml(summary);
+
+            const { id, createdAt } = data.sys;
+            const createdAtDateStr = new Date(createdAt).toLocaleDateString();
+
+            return `<div class="entry">
+              <h4 class="entry-title">${ title }</h4>
+              ${ guestAuthor ? `<p><span class="guest-writer">Guest Writer: ${ guestAuthor }</span></p>` : `` }
+              ${ summaryHtml }
+              <p class="permalink"><a href data-type="episode" data-episode="${ id }">
+                ${ number >= 0 ? `episode #${ number}` : createdAtDateStr }
+              </a></p>
+            </div>`;
+
           }
 
-          const fetchQuery = (params, id='') => fetch(`${ apiurl }/${ id }?${ queryParams(params) }`)
-            .then(response => response.json());
-
-          const headerComponent = data => `<header>
-            <div class="titleBox">
-              <h3 class="title" data-type="path" data-path="/">A Presidential Sitcom</h3>
-              <h5 class="credits">by <a href="https://twitter.com/roshow" target="_blank">roshow</a></h5>
-            </div>
-          </header>`;
-
-          const entryComponent = data => `<div class="entry">
-            <p>${ data.fields.summary }</p>
-            <p class="permalink"><a href data-type="episode" data-episode="${ data.sys.id }">${ new Date(data.sys.createdAt).toLocaleString() }</a></p>
-          </div>`;
-
-          const episodeListComponent = data => `<div class="episodeList">
+          const listComponent = (data, listType='') => `<div class="${ listType }">
             ${ data.items.reduce((htmlStr, item) => htmlStr + entryComponent(item), '') }
-          </div>`;
+          </div>`
+
+          const episodeListComponent = data => listComponent(data, 'episodeList');
 
           const episodeComponent = data => `<div class="episode">
             <article>
@@ -165,6 +201,8 @@
             <div data-type="episode" class="btn btn-next hide">Next »</div>
             <div class="clearfix"></div>
           </div>`;
+
+          const detailsListComponent = data => listComponent(data, 'detailsList');
 
           const updateEpisodeComponent = (data, el) => el.innerHTML = entryComponent(data);
 
@@ -179,59 +217,98 @@
             }
           }
 
-
-          const appEl = document.querySelector('#app');
+          const defaultQuery = {
+            'content_type': 'episodes',
+            'limit': 100,
+            'order': '-fields.number',
+            'access_token': '1676b21629539cf0be8b7d7df2a3cb0fd9343767ffd512ea74065aaca9755bc7'
+          }
           
-          const render = data => {
-
-            switch (data.sys.type) {
-              
-              case 'Entry':
-                
-                const el = document.querySelector('.episode article');
-                if (el) {
-                  el.innerHTML = updateEpisodeComponent(data, el);
-                }
-                else {
-                  appEl.innerHTML = headerComponent() + episodeComponent(data);  
-                }
-                
-                /* FETCH PREVIOUS EPISODE */
-                fetchQuery({ limit: 1,  [`sys.createdAt[lt]`]: data.sys.createdAt}).then(response => setEpisodeArrows('.btn-previous', response.items[0]));
-                
-                /* FETCH NEW EPISODE */
-                fetchQuery({ limit: 1, [`sys.createdAt[gt]`]: data.sys.createdAt, order: 'sys.createdAt' }).then(response => setEpisodeArrows('.btn-next', response.items[0]));
-
-                return;
-
-              case 'Array':
-                
-                return appEl.innerHTML = headerComponent() + episodeListComponent(data);
-
-              case 'Error':
-              default:
-                
-                console.warn('response error', data);
-                return appEl.innerHTML = headerComponent() + `<h2>500 Error</h2>`;
-            }
-          };
-
-          const pathRegex = /^\/episodes\/(.+?(?=\/|$))/
-
-          const renderFromPath = (path, query) => fetchQuery(query, ( path.match(pathRegex) || [] )[1] ).then( data => {
-            return render(data);
-          });
-
-          const renderFromCurrentPath = query => renderFromPath(window.location.pathname);
-
-          const changePath = (path, renderMethod, state=null) => {
-            history.pushState(state, null, path);
-            return renderMethod(path);
+          const queryParams = (params={}) => {
+            const allParams = Object.assign({}, defaultQuery, params);
+            return Object.keys(allParams)
+                .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(allParams[k]))
+                .join('&');
           }
 
-          const changePathAndRender = (path, state) => changePath(path, renderFromPath, state);
+          const fetchQuery = (params, id='') => fetch(`${ API_URL }/${ id }?${ queryParams(params) }`)
+            .then(response => response.json());
 
-          appEl.addEventListener('click', e => {
+          const renderEpisodeList = data => APP_EL.innerHTML = headerComponent() + episodeListComponent(data);
+
+          const renderDetailsList = data => {
+            APP_EL.innerHTML = headerComponent() + detailsListComponent(data);
+            APP_EL.querySelectorAll('a[href]').forEach(el => el.target = '_blank');
+          }
+
+          const renderEpisode = data => {
+            const el = document.querySelector('.episode article');
+            if (el) {
+              el.innerHTML = updateEpisodeComponent(data, el);
+            }
+            else {
+              APP_EL.innerHTML = headerComponent() + episodeComponent(data);  
+            }
+            
+            /* FETCH PREVIOUS EPISODE */
+            fetchQuery({
+              limit: 1,
+              'fields.number': data.fields.number - 1
+            }).then(response => setEpisodeArrows('.btn-previous', response.items[0]));
+            
+            /* FETCH NEW EPISODE */
+            fetchQuery({
+              limit: 1,
+              'fields.number': data.fields.number + 1
+            }).then(response => setEpisodeArrows('.btn-next', response.items[0]));
+          }
+          
+
+          const fetchAndRender = (query, path) => fetchQuery(query, path).then(render); 
+
+          const REGEX_EPISODE = /^\/episodes\/(.+?(?=\/|$))/
+
+          const router = (path, query={}) => {
+            
+            if (path === '/') {
+              
+              fetchQuery().then(renderEpisodeList);
+            
+            }
+
+            else if (path === '/about') {
+
+              fetchQuery({
+                content_type: 'details',
+                'fields.onAboutPage': true,
+                order: 'fields.aboutPagePosition'
+              }).then(renderDetailsList);
+
+            }
+            
+            else if (REGEX_EPISODE.test(path)) {
+              
+              fetchQuery(query, path.match(REGEX_EPISODE)[1]).then(renderEpisode);
+            
+            }
+            
+            else {
+
+              history.replaceState(null, null, '/');
+              fetchAndRender(); 
+
+            }
+
+            return;
+          }
+
+
+          const changePathAndRender = (path, state=null) => {
+            history.pushState(state, null, path);
+            return router(window.location.pathname);
+          }
+
+          APP_EL.addEventListener('click', e => {
             
             const dataset = e.target.dataset;
             if (dataset.type) {
@@ -249,7 +326,7 @@
           });
           window.addEventListener('popstate', e => renderFromCurrentPath()); 
 
-          renderFromCurrentPath();
+          router(window.location.pathname);
 
         </script>
     </body>
