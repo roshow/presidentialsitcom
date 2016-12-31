@@ -122,14 +122,11 @@
 
           .episode .permalink,
           .detailsList .permalink,
-          .episode .entry-title,
           .episodeList .entry-title { display: none; }
 
           .episode .entry { margin-bottom: 10px; }
 
-          .guest-writer {
-            font-weight: bold;
-          }
+          .fontBold { font-weight: bold; }
 
           .detailsList a { text-decoration: underline; }
 
@@ -177,8 +174,8 @@
             const createdAtDateStr = new Date(createdAt).toLocaleDateString();
 
             return `<div class="entry">
-              <h4 class="entry-title">${ title }</h4>
-              ${ guestAuthor ? `<p><span class="guest-writer">Guest Writer: ${ guestAuthor }</span></p>` : `` }
+              <p class="entry-title"><span class="fontBold">${ number >= 0 ? `Episode #${ number }` :  title }</span</p>
+              ${ guestAuthor ? `<p><span class="fontBold">by guest writer ${ guestAuthor }</span></p>` : `` }
               ${ summaryHtml }
               <p class="permalink"><a href data-type="episode" data-episode="${ id }">
                 ${ number >= 0 ? `episode #${ number}` : createdAtDateStr }
