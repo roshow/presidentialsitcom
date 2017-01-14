@@ -1,6 +1,6 @@
 <?php
   
-  $title = 'A Presidential Sitcom';
+  $title = 'Presidential Sitcom';
   $site_url = 'http://presidentialsit.com';
   $site_description = "A rich old white guy says so much crazy and angry stuff that he becomes President. But now he's got to figure out how to run a whole country!";
   $uri = $_SERVER["REQUEST_URI"];

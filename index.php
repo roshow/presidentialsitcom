@@ -167,19 +167,20 @@
 
           const entryComponent = (data, options={}) => {
 
+            const { id, createdAt, contentType } = data.sys;
+            const createdAtDateStr = new Date(createdAt).toLocaleDateString();
+            const entryType = contentType.sys.id;
+
             const { title='', summary, guestAuthor, number } = data.fields;
             const summaryHtml = mdConverter.makeHtml(summary);
+            const titleStr = entryType === 'episodes' ? `Episode #${ number }` :  title;
 
-            const { id, createdAt } = data.sys;
-            const createdAtDateStr = new Date(createdAt).toLocaleDateString();
 
             return `<div class="entry">
-              <p class="entry-title"><span class="fontBold">${ number >= 0 ? `Episode #${ number }` :  title }</span</p>
-              ${ guestAuthor ? `<p><span class="fontBold">by guest writer ${ guestAuthor }</span></p>` : `` }
+              <p class="entry-title"><span class="fontBold">${ titleStr }</span</p>
               ${ summaryHtml }
-              <p class="permalink"><a href data-type="episode" data-episode="${ id }">
-                ${ number >= 0 ? `episode #${ number}` : createdAtDateStr }
-              </a></p>
+              ${ guestAuthor ? `<p><span class="fontBold">by guest writer ${ guestAuthor }</span></p>` : `` }
+              <p class="permalink"><a href data-type="${ entryType }" data-episode="${ id }">${ titleStr.toLowerCase() || createdAtDateStr }</a></p>
             </div>`;
 
           }
@@ -194,8 +195,8 @@
             <article>
               ${ entryComponent(data) }
             </article>
-            <div data-type="episode" class="btn btn-previous hide">« Previous</div>
-            <div data-type="episode" class="btn btn-next hide">Next »</div>
+            <div data-type="episodes" class="btn btn-previous hide">« Previous</div>
+            <div data-type="episodes" class="btn btn-next hide">Next »</div>
             <div class="clearfix"></div>
           </div>`;
 
@@ -314,7 +315,7 @@
               switch (dataset.type) {
                 case 'path':
                   return changePathAndRender(dataset.path);
-                case 'episode':
+                case 'episodes':
                   return changePathAndRender(`/episodes/${ dataset.episode }`);
                 default:
                   return;
