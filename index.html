@@ -122,14 +122,11 @@
 
           .episode .permalink,
           .detailsList .permalink,
-          .episode .entry-title,
           .episodeList .entry-title { display: none; }
 
           .episode .entry { margin-bottom: 10px; }
 
-          .guest-writer {
-            font-weight: bold;
-          }
+          .fontBold { font-weight: bold; }
 
           .detailsList a { text-decoration: underline; }
 
@@ -158,31 +155,34 @@
             const path = window.location.pathname;
             return `<header>
               <div class="titleBox">
-                <h3 class="title" data-type="path" data-path="/">A Presidential Sitcom</h3>
+                <h3 class="title" data-type="path" data-path="/">Presidential Sitcom</h3>
               </div>
               <nav>
                 <a data-type="path" data-path="/" class="${ path === '/' ? 'active' : '' }" >episodes</a>
                 |
                 <a data-type="path" data-path="/about" class="${ path === '/about' ? 'active' : '' }">about</a>
+                |
+                <a href="https://twitter.com/presidentsitcom">twitter</a>
               </nav>
             </header>`;
           }
 
           const entryComponent = (data, options={}) => {
 
+            const { id, createdAt, contentType } = data.sys;
+            const createdAtDateStr = new Date(createdAt).toLocaleDateString();
+            const entryType = contentType.sys.id;
+
             const { title='', summary, guestAuthor, number } = data.fields;
             const summaryHtml = mdConverter.makeHtml(summary);
+            const titleStr = entryType === 'episodes' ? `Episode #${ number }` :  title;
 
-            const { id, createdAt } = data.sys;
-            const createdAtDateStr = new Date(createdAt).toLocaleDateString();
 
             return `<div class="entry">
-              <h4 class="entry-title">${ title }</h4>
-              ${ guestAuthor ? `<p><span class="guest-writer">Guest Writer: ${ guestAuthor }</span></p>` : `` }
+              <p class="entry-title"><span class="fontBold">${ titleStr }</span</p>
               ${ summaryHtml }
-              <p class="permalink"><a href data-type="episode" data-episode="${ id }">
-                ${ number >= 0 ? `episode #${ number}` : createdAtDateStr }
-              </a></p>
+              ${ guestAuthor ? `<p><span class="fontBold">by guest writer ${ guestAuthor }</span></p>` : `` }
+              <p class="permalink"><a href data-type="${ entryType }" data-episode="${ id }">${ titleStr.toLowerCase() || createdAtDateStr }</a></p>
             </div>`;
 
           }
@@ -197,8 +197,8 @@
             <article>
               ${ entryComponent(data) }
             </article>
-            <div data-type="episode" class="btn btn-previous hide">« Previous</div>
-            <div data-type="episode" class="btn btn-next hide">Next »</div>
+            <div data-type="episodes" class="btn btn-previous hide">« Previous</div>
+            <div data-type="episodes" class="btn btn-next hide">Next »</div>
             <div class="clearfix"></div>
           </div>`;
 
@@ -295,7 +295,7 @@
             else {
 
               history.replaceState(null, null, '/');
-              fetchAndRender(); 
+              router('/', query); 
 
             }
 
@@ -317,7 +317,7 @@
               switch (dataset.type) {
                 case 'path':
                   return changePathAndRender(dataset.path);
-                case 'episode':
+                case 'episodes':
                   return changePathAndRender(`/episodes/${ dataset.episode }`);
                 default:
                   return;

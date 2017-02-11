@@ -1,12 +1,15 @@
 <?php
-
-  $siteurl = 'http://presidentialsit.com';
+  
+  $title = 'Presidential Sitcom';
+  $site_url = 'http://presidentialsit.com';
+  $site_description = "A rich old white guy says so much crazy stuff that he's elected President. Now he, the First Family, and the new White House staff must figure out how to run an entire country!";
   $uri = $_SERVER["REQUEST_URI"];
-  $is_match = preg_match_all("/^\/episodes\/([a-zA-Z0-9]+)/", $uri, $matches_out);
+  $is_episode = preg_match_all("/^\/episodes\/([a-zA-Z0-9]+)/", $uri, $episode_matches_out);
+  $is_about = preg_match_all("/^\/about$/", $uri);
 
-  if ($is_match) {
+  if ($is_episode) {
 
-    $id = $matches_out[1][0];
+    $id = $episode_matches_out[1][0];
 
     $url =  'https://cdn.contentful.com/spaces/vc1pqz55uikb/entries/' . $id . '?content_type=episodes&limit=100&order=-sys.createdAt&access_token=1676b21629539cf0be8b7d7df2a3cb0fd9343767ffd512ea74065aaca9755bc7';
 
@@ -19,26 +22,34 @@
 
     $json = json_decode($json);
     $description = $json->fields->summary;
-    $url = $siteurl . '/episodes/' . $id;
+    $url = $site_url . '/episodes/' . $id;
+    $title .= ' | Episode #' . $json->fields->number;
+
+  }
+
+  else if ($is_about) {
+    $title .= ' | About';
+    $description = 'All the dirty details about Presidential Sitcom';
+    $url = $site_url . '/about';
   }
 
   else {
 
-    $description = "A rich old white guy says so much crazy and angry stuff that he becomes President. But now he's got to figure out how to run a whole country!";
-    $url = $siteurl;
+    $description = $site_description;
+    $url = $site_url;
   }
 
 ?>
 
-
-<title>A Presidential Sitcom</title>
+<meta data-uri="<?= $uri ?>">
+<title><?= $title ?></title>
 <meta name="description" content="<?= $description ?>">
 
 <meta name="twitter:card" value="summary">
 
-<meta property="og:title" content="A Presidential Sitcom" />
+<meta property="og:title" content="<?= $title ?>" />
 <meta property="og:type" content="article" />
 <meta property="og:description" content="<?= $description ?>" />
 <meta property="og:url" content="<?= $url ?>" />
-<!-- <meta property="og:image" content="http://example.com/image.jpg" /> -->
+<meta property="og:image" content="//roshow.net/images/presidentialsitcom_block.jpg" />
 
