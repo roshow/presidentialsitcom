@@ -30,7 +30,7 @@
   else if ($is_about) {
     $title .= ' | About';
     $description = 'All the dirty details about Presidential Sitcom';
-    $url = 'http://presidentialsit.com/about';
+    $url = $site_url . '/about';
   }
 
   else {
