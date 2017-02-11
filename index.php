@@ -155,12 +155,14 @@
             const path = window.location.pathname;
             return `<header>
               <div class="titleBox">
-                <h3 class="title" data-type="path" data-path="/">A Presidential Sitcom</h3>
+                <h3 class="title" data-type="path" data-path="/">Presidential Sitcom</h3>
               </div>
               <nav>
                 <a data-type="path" data-path="/" class="${ path === '/' ? 'active' : '' }" >episodes</a>
                 |
                 <a data-type="path" data-path="/about" class="${ path === '/about' ? 'active' : '' }">about</a>
+                |
+                <a href="https://twitter.com/presidentsitcom">twitter</a>
               </nav>
             </header>`;
           }

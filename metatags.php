@@ -2,7 +2,7 @@
   
   $title = 'Presidential Sitcom';
   $site_url = 'http://presidentialsit.com';
-  $site_description = "A rich old white guy says so much crazy and angry stuff that he becomes President. But now he's got to figure out how to run a whole country!";
+  $site_description = "A rich old white guy says so much crazy stuff that he's elected President. Now he, the First Family, and the new White House staff must figure out how to run an entire country!";
   $uri = $_SERVER["REQUEST_URI"];
   $is_episode = preg_match_all("/^\/episodes\/([a-zA-Z0-9]+)/", $uri, $episode_matches_out);
   $is_about = preg_match_all("/^\/about$/", $uri);
@@ -29,8 +29,8 @@
 
   else if ($is_about) {
     $title .= ' | About';
-    $description = $site_description;
-    $url = $site_url;
+    $description = 'All the dirty details about Presidential Sitcom';
+    $url = 'http://presidentialsit.com/about';
   }
 
   else {
@@ -51,5 +51,5 @@
 <meta property="og:type" content="article" />
 <meta property="og:description" content="<?= $description ?>" />
 <meta property="og:url" content="<?= $url ?>" />
-<!-- <meta property="og:image" content="http://example.com/image.jpg" /> -->
+<meta property="og:image" content="//roshow.net/images/presidentialsitcom_block.jpg" />
 
