@@ -182,7 +182,7 @@
               <p class="entry-title"><span class="fontBold">${ titleStr }</span</p>
               ${ summaryHtml }
               ${ guestAuthor ? `<p><span class="fontBold">by guest writer ${ guestAuthor }</span></p>` : `` }
-              <p class="permalink"><a href data-type="${ entryType }" data-episode="${ id }">${ titleStr.toLowerCase() || createdAtDateStr }</a></p>
+              <p class="permalink"><a href data-type="${ entryType }" data-episode="${ number }">${ titleStr.toLowerCase() || createdAtDateStr }</a></p>
             </div>`;
 
           }
@@ -210,7 +210,7 @@
             const el = document.querySelector(selector);
             if (episode){
               el.classList.remove('hide');
-              el.dataset.episode = episode.sys.id;
+              el.dataset.episode = episode.fields.number;
             }
             else {
               el.classList.add('hide');
@@ -219,7 +219,7 @@
 
           const defaultQuery = {
             'content_type': 'episodes',
-            'limit': 100,
+            'limit': 99,
             'order': '-fields.number',
             'access_token': '1676b21629539cf0be8b7d7df2a3cb0fd9343767ffd512ea74065aaca9755bc7'
           }
@@ -262,17 +262,17 @@
               'fields.number': data.fields.number + 1
             }).then(response => setEpisodeArrows('.btn-next', response.items[0]));
           }
-          
 
-          const fetchAndRender = (query, path) => fetchQuery(query, path).then(render); 
+          const REGEX_EPISODE_ID = /^\/episodes\/(.+?(?=\/|$))/
+          const REGEX_EPISODE_NUMBER = /^\/episode\/(.+?(?=\/|$))/
 
-          const REGEX_EPISODE = /^\/episodes\/(.+?(?=\/|$))/
 
           const router = (path, query={}) => {
             
             if (path === '/') {
               
-              fetchQuery().then(renderEpisodeList);
+              fetchQuery()
+                .then(renderEpisodeList)
             
             }
 
@@ -285,23 +285,50 @@
               }).then(renderDetailsList);
 
             }
+
+            else if (REGEX_EPISODE_NUMBER.test(path)) {
+
+              fetchQuery({
+                limit: 1,
+                'fields.number': path.match(REGEX_EPISODE_NUMBER)[1]
+              })
+                .then(response => {
+                  renderEpisodeFromResponse(response.items.length === 0, response.items[0])
+                })
+
+            }
             
-            else if (REGEX_EPISODE.test(path)) {
-              
-              fetchQuery(query, path.match(REGEX_EPISODE)[1]).then(renderEpisode);
+            else if (REGEX_EPISODE_ID.test(path)) {
+
+              fetchQuery(query, path.match(REGEX_EPISODE_ID)[1])
+                .then(response => {
+                  renderEpisodeFromResponse(response.sys.type === 'Error', response)
+                })
             
             }
             
             else {
 
-              history.replaceState(null, null, '/');
-              router('/', query); 
+              rerouteHome()
 
             }
 
             return;
           }
 
+          const rerouteHome = (query={}) => {
+            history.replaceState(null, null, '/');
+            router('/', query); 
+          }
+
+          const renderEpisodeFromResponse = (e, ...args) => {
+            if (e) {
+              return rerouteHome()
+            }
+            return renderEpisode(...args)
+          }
+
+          const renderFromCurrentPath = () => router(window.location.pathname)
 
           const changePathAndRender = (path, state=null) => {
             history.pushState(state, null, path);
@@ -318,7 +345,7 @@
                 case 'path':
                   return changePathAndRender(dataset.path);
                 case 'episodes':
-                  return changePathAndRender(`/episodes/${ dataset.episode }`);
+                  return changePathAndRender(`/episode/${ dataset.episode }`);
                 default:
                   return;
               }
