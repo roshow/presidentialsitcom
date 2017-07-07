@@ -194,12 +194,12 @@
           const episodeListComponent = data => listComponent(data, 'episodeList');
 
           const episodeComponent = data => `<div class="episode">
-            <article>
-              ${ entryComponent(data) }
-            </article>
             <div data-type="episodes" class="btn btn-previous hide">« Previous</div>
             <div data-type="episodes" class="btn btn-next hide">Next »</div>
-            <div class="clearfix"></div>
+            
+            <article class="clearfix">
+              ${ entryComponent(data) }
+            </article>
           </div>`;
 
           const detailsListComponent = data => listComponent(data, 'detailsList');
@@ -321,8 +321,8 @@
             router('/', query); 
           }
 
-          const renderEpisodeFromResponse = (e, ...args) => {
-            if (e) {
+          const renderEpisodeFromResponse = (error, ...args) => {
+            if (error) {
               return rerouteHome()
             }
             return renderEpisode(...args)
