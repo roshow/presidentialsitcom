@@ -219,7 +219,7 @@
 
           const defaultQuery = {
             'content_type': 'episodes',
-            'limit': 999,
+            'limit': 99,
             'order': '-fields.number',
             'access_token': '1676b21629539cf0be8b7d7df2a3cb0fd9343767ffd512ea74065aaca9755bc7'
           }
@@ -321,8 +321,8 @@
             router('/', query); 
           }
 
-          const renderEpisodeFromResponse = (e, ...args) => {
-            if (e) {
+          const renderEpisodeFromResponse = (error, ...args) => {
+            if (error) {
               return rerouteHome()
             }
             return renderEpisode(...args)

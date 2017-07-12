@@ -194,12 +194,12 @@
           const episodeListComponent = data => listComponent(data, 'episodeList');
 
           const episodeComponent = data => `<div class="episode">
-            <div data-type="episodes" class="btn btn-previous hide">« Previous</div>
-            <div data-type="episodes" class="btn btn-next hide">Next »</div>
-            
-            <article class="clearfix">
+            <article>
               ${ entryComponent(data) }
             </article>
+            <div data-type="episodes" class="btn btn-previous hide">« Previous</div>
+            <div data-type="episodes" class="btn btn-next hide">Next »</div>
+            <div class="clearfix"></div>
           </div>`;
 
           const detailsListComponent = data => listComponent(data, 'detailsList');
