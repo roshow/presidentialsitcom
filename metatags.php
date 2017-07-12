@@ -11,20 +11,22 @@
 
     $id = $episode_matches_out[1][0];
 
-    $url = 'https://cdn.contentful.com/spaces/vc1pqz55uikb/entries/?content_type=episodes&limit=1&order=-fields.number&access_token=1676b21629539cf0be8b7d7df2a3cb0fd9343767ffd512ea74065aaca9755bc7&fields.number=' . $id
+    // $url =  'https://cdn.contentful.com/spaces/vc1pqz55uikb/entries/' . $id . '?content_type=episodes&access_token=1676b21629539cf0be8b7d7df2a3cb0fd9343767ffd512ea74065aaca9755bc7';
+
+    $url = 'https://cdn.contentful.com/spaces/vc1pqz55uikb/entries/?content_type=episodes&limit=1&order=-fields.number&access_token=1676b21629539cf0be8b7d7df2a3cb0fd9343767ffd512ea74065aaca9755bc7&fields.number=' . $id;
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_HEADER, 0);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true ); 
-    $response = curl_exec($ch);
+    $json = curl_exec($ch);
     curl_close($ch);
 
-    $response = json_decode($response);
-    $json = $response[0]
-    $description = $json->fields->summary;
+    $json = json_decode($json);
+    $fields = $json->items[0]->fields;
+    $description = htmlspecialchars($fields->summary);
     $url = $site_url . '/episodes/' . $id;
-    $title .= ' | Episode #' . $json->fields->number;
+    $title .= ' | Episode #' . $fields->number;
 
   }
 
